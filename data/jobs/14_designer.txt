@@ -1,0 +1,43 @@
+================================================================================
+                    JOB DESCRIPTION — DESIGN
+================================================================================
+
+Job Title   : Senior UX/UI Designer
+Department  : Product Design
+Reports To  : Head of Design / CPO
+Employment  : Full-Time | Remote-Friendly
+
+ABOUT THE ROLE
+--------------
+We are looking for a talented Senior UX/UI Designer to craft intuitive, beautiful,
+and user-centered digital experiences that delight users and drive business goals
+across web and mobile platforms.
+
+RESPONSIBILITIES
+----------------
+• Lead UX research: user interviews, surveys, usability testing, and journey mapping.
+• Create wireframes, prototypes, and high-fidelity mockups for web and mobile.
+• Define and maintain the design system and component library.
+• Collaborate closely with product managers, engineers, and stakeholders.
+• Present design concepts and rationale to cross-functional teams.
+• Iterate rapidly on designs based on user feedback and data insights.
+• Ensure accessibility (WCAG 2.1) and inclusive design across all deliverables.
+• Mentor junior designers and uphold design quality standards.
+
+REQUIREMENTS
+------------
+• Bachelor's degree in Interaction Design, Graphic Design, or HCI.
+• 4+ years of UX/UI design experience (product or agency).
+• Expert proficiency in Figma; experience with Sketch or Adobe XD.
+• Strong portfolio demonstrating end-to-end design process.
+• Solid understanding of front-end constraints (HTML, CSS basics).
+• Data-driven design approach with experience in A/B testing.
+
+WHAT WE OFFER
+-------------
+• Competitive salary and design tool subscriptions.
+• Remote-first culture with flexible hours.
+• Impactful role shaping products used by millions.
+• Annual design conference and learning budget.
+
+================================================================================

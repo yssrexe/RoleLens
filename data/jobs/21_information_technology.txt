@@ -1,0 +1,44 @@
+================================================================================
+                    JOB DESCRIPTION — INFORMATION TECHNOLOGY
+================================================================================
+
+Job Title   : Senior Software Engineer – Backend
+Department  : Engineering / IT
+Reports To  : Engineering Manager / CTO
+Employment  : Full-Time | Remote / Hybrid
+
+ABOUT THE ROLE
+--------------
+We are seeking a highly skilled Senior Software Engineer to design and build
+scalable backend systems, APIs, and microservices that power our core products
+and serve millions of users globally.
+
+RESPONSIBILITIES
+----------------
+• Architect, develop, and maintain high-performance backend services and REST/GraphQL APIs.
+• Write clean, testable, and well-documented code following best practices.
+• Participate in system design discussions and technical architecture reviews.
+• Lead code reviews and mentor junior and mid-level engineers.
+• Optimize application performance, reliability, and scalability.
+• Collaborate with front-end engineers, DevOps, and product managers.
+• Identify and resolve production incidents and technical debt.
+• Contribute to CI/CD pipelines, infrastructure-as-code, and deployment processes.
+
+REQUIREMENTS
+------------
+• Bachelor's degree in Computer Science, Software Engineering, or related field.
+• 5+ years of backend software development experience.
+• Proficiency in Python, Go, Java, or Node.js.
+• Strong experience with databases (PostgreSQL, MongoDB, Redis).
+• Familiarity with cloud platforms (AWS, GCP, Azure) and containerization (Docker, K8s).
+• Solid understanding of distributed systems, REST APIs, and microservices.
+• Experience with Agile/Scrum development methodologies.
+
+WHAT WE OFFER
+-------------
+• Competitive salary + equity package.
+• Fully remote or hybrid work flexibility.
+• Learning budget and conference attendance.
+• Work on products with global-scale impact.
+
+================================================================================

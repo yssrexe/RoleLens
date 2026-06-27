@@ -1,0 +1,45 @@
+================================================================================
+                    JOB DESCRIPTION — ENGINEERING
+================================================================================
+
+Job Title   : Mechanical Engineer – Product Development
+Department  : Engineering & R&D
+Reports To  : Chief Engineer / Engineering Manager
+Employment  : Full-Time | On-site / Hybrid
+
+ABOUT THE ROLE
+--------------
+We are looking for an innovative Mechanical Engineer to design, develop, and
+test mechanical systems and components, bringing new products from concept to
+production with efficiency and precision.
+
+RESPONSIBILITIES
+----------------
+• Design mechanical components and assemblies using CAD software (SolidWorks,
+  AutoCAD, CATIA).
+• Perform engineering calculations, simulations (FEA/CFD), and tolerance analyses.
+• Develop prototypes and coordinate with manufacturing for design validation.
+• Write test plans, conduct experiments, and analyze results to validate designs.
+• Manage engineering change orders (ECOs) and maintain technical documentation.
+• Collaborate with cross-functional teams (electrical, software, procurement).
+• Ensure designs comply with industry standards (ASME, ISO, CE, UL).
+• Identify and resolve design issues through root cause analysis.
+
+REQUIREMENTS
+------------
+• Bachelor's degree in Mechanical Engineering (Master's preferred).
+• 3+ years of product design or manufacturing engineering experience.
+• Proficiency in SolidWorks, AutoCAD, or equivalent CAD tools.
+• Experience with FEA/CFD analysis (ANSYS, COMSOL).
+• Strong understanding of GD&T, materials science, and manufacturing processes.
+• Excellent problem-solving skills and engineering judgment.
+• PE license is a plus.
+
+WHAT WE OFFER
+-------------
+• Competitive salary and innovation bonuses.
+• Access to state-of-the-art engineering labs and tools.
+• Sponsorship for PE licensure and professional certifications.
+• Collaborative environment working on cutting-edge products.
+
+================================================================================
