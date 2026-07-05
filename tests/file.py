@@ -6,7 +6,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 texts = [
     "The cat is sleeping on the sofa.",
-    "My dog loves playing in the park.",
+    "My  dog loves playingin the park.",
     "The fish swims quietly in the aquarium.",
     "A small bird landed on the tree branch.",
     "The lizard is warming itself on a rock.",
