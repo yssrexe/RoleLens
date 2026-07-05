@@ -63,12 +63,3 @@ def chunk_documents(documents):
         chunk.metadata["chunk_id"] = i
         chunk.page_content = clean_text(chunk.page_content)
     return chunks
-
-# if __name__ == "__main__":
-#     documents = load_resumes(categories=["INFORMATION-TECHNOLOGY"]) + load_jobs()
-#     chunks = chunk_documents(documents)
-
-#     print(f"Loaded {len(documents)} documents")
-#     print(f"Created {len(chunks)} chunks")
-#     print(f"page content: {chunks[0].page_content[:500]}")
-#     print(f"metadata: {chunks[0].metadata}")
