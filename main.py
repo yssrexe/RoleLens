@@ -10,8 +10,8 @@ from src.embeddings.embed_store import store_documents, search_documents
 
 
 if __name__ == "__main__":
-    # documents = load_resumes(categories=["INFORMATION-TECHNOLOGY"]) + load_jobs()
-    # chunks = chunk_documents(documents)
-    # print(f"Loaded {len(chunks)} chunks")
-    # store_documents(chunks)
-    search_documents("Strong Â software and application knowledge such as Avaya,Microsoft Office,and Remedy", doc_type="resume")
+    documents = load_resumes(categories=["INFORMATION-TECHNOLOGY"]) + load_jobs()
+    chunks = chunk_documents(documents)
+    print(f"Loaded {len(chunks)} chunks")
+    store_documents(chunks)
+    search_documents("give me a resume with C / C++ (Low-Level) AI / RAG Integration PostgreSQL / MySQL", doc_type="resume")

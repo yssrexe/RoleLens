@@ -42,7 +42,7 @@ def get_candidate_info(source_path: str):
     return results[0].page_content if results else "No info found"
 
 
-def search_documents(query: str, top_k: int = 5, doc_type: str = None):
+def search_documents(query: str, top_k: int = 1, doc_type: str = None):
     print(f"search for: {query}\n")
     filter = {"doc_type": doc_type} if doc_type else None
     results = vector_store.similarity_search(query, k=top_k * 3, filter=filter)
@@ -57,9 +57,4 @@ def search_documents(query: str, top_k: int = 5, doc_type: str = None):
             break
     for i, result in enumerate(unique):
         candidate_info = get_candidate_info(result.metadata["source"])
-        print(f"--- Result {i+1} ---")
-        print(f"File      : {result.metadata.get('file_name')}")
-        print(f"Category  : {result.metadata.get('category')}")
-        print(f"Candidate :\n{candidate_info[:300]}")
-        print(f"Matched   :\n{result.page_content[:300]}")
-        print()
+        print(f"\nmetadata:\n{result.metadata}\n")
