@@ -1,23 +1,25 @@
 import os
+import sys
 from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+from config import DB_CONNECTION, EMBEDDING_MODEL
+
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_postgres.vectorstores import PGVector
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2",
+embeddings = HuggingFaceEmbeddings(model_name=f"sentence-transformers/{EMBEDDING_MODEL}",
                                    encode_kwargs={"normalize_embeddings": True})
 
-CONNECTION_STRING = (
-    f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
-    f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-)
+
 
 collection_name = "resume_job_matching"
 
 vector_store = PGVector(
-    connection=CONNECTION_STRING,
+    connection=DB_CONNECTION,
     collection_name=collection_name,
     embeddings=embeddings,
     use_jsonb=True
