@@ -60,7 +60,7 @@ def load_resumes(categories=None):
                 numfeild += 1
                 ai_metadata = {
                     "industry": "Unknown", "role": "Unknown",
-                    "primary_skills": [], "years_experience": 0,
+                    "all_skills": [], "years_experience": 0,
                     "education_level": "Unknown"
                 }
 

@@ -35,28 +35,3 @@ def store_documents(chunks):
     print("insert completed")
 
 
-def get_candidate_info(source_path: str):
-    results = vector_store.similarity_search(
-        "name contact email phone address",
-        k=1,
-        filter={"source": source_path}
-    )
-    return results[0].page_content if results else "No info found"
-
-
-def search_documents(query: str, top_k: int = 1, doc_type: str = None):
-    print(f"search for: {query}\n")
-    filter = {"doc_type": doc_type} if doc_type else None
-    results = vector_store.similarity_search(query, k=top_k * 3, filter=filter)
-    seen = set()
-    unique = []
-    for result in results:
-        src = result.metadata["source"]
-        if src not in seen:
-            seen.add(src)
-            unique.append(result)
-        if len(unique) == top_k:
-            break
-    for i, result in enumerate(unique):
-        candidate_info = get_candidate_info(result.metadata["source"])
-        print(f"\nmetadata:\n{result.metadata}\n")

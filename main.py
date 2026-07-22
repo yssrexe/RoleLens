@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
 from src.loaders.ingest import load_resumes, load_jobs, chunk_documents
-from src.embeddings.embed_store import store_documents, search_documents
-
+from src.embeddings.embed_store import store_documents
+from src.retrievers.retriever import retrieval_search
 
 
 if __name__ == "__main__":
@@ -14,4 +14,6 @@ if __name__ == "__main__":
     chunks = chunk_documents(documents)
     print(f"Loaded {len(chunks)} chunks")
     store_documents(chunks)
-    search_documents("give me a resume with C / C++ (Low-Level) AI / RAG Integration PostgreSQL / MySQL", doc_type="resume")
+    results = retrieval_search("give me a resume with C / C++ (Low-Level) AI / RAG Integration PostgreSQL / MySQL", doc_type="resume")
+    for result in results:
+        print(f"Source: {result.metadata['source']}, Score: {result.metadata.get('score', 'N/A')}")
