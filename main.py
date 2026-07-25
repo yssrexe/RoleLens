@@ -16,4 +16,8 @@ if __name__ == "__main__":
     store_documents(chunks)
     results = retrieval_search("give me a resume with C / C++ (Low-Level) AI / RAG Integration PostgreSQL / MySQL", doc_type="resume")
     for result in results:
-        print(f"Source: {result.metadata['source']}, Score: {result.metadata.get('score', 'N/A')}")
+        print(
+            f"Source: {result.metadata['source']}, "
+            f"Vector score: {result.metadata.get('vector_score', 'N/A')}, "
+            f"Rerank score: {result.metadata.get('rerank_score', 'N/A')}"
+        )
