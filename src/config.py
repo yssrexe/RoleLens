@@ -8,5 +8,5 @@ DB_CONNECTION = f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('DB_PA
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 RERANKER_MODEL  = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 OLLAMA_MODEL    = "llama3.2:latest"
-TOP_K_RETRIEVE  = 5   # how many pgvector returns
-TOP_K_RERANK    = 1
+TOP_K_RETRIEVE  = 4   # how many pgvector returns
+TOP_K_RERANK    = 2

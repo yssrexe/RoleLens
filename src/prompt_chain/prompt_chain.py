@@ -39,24 +39,24 @@ Resume information:
 Write the result in exactly this format for one candidate only:
 
 ========================================
-Name   : <candidate name or file name>
+Name   : <{candidate_dict['file_name']}>
 Score  : <one decimal number out of 10>
 Strengths : <short sentence based only on the resume>
 Gaps      : <short sentence about what is missing relative to the role>
 Questions :
     <skill 1>:
         1. <question>
+        1. <response>
         2. <question>
-        3. <question>
-        4. <question>
+        2. <response>
     <skill 2>:
         1. <question>
+        1. <response>
         2. <question>
-        3. <question>
-        4. <question>
+        2. <response>
 
 Generate questions for every skill in the resume's all_skills list.
-Each skill must have exactly 4 distinct interview questions.
+Each skill must have exactly 2 distinct interview questions and also under every question add a simple resonse.
 Questions should be specific, practical, and relevant to the role requirement.
 
 Rules:

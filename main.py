@@ -11,7 +11,7 @@ from src.prompt_chain.prompt_chain import generate_questions_for_resumes
 
 
 if __name__ == "__main__":
-    # documents = load_resumes(categories=["INFORMATION-TECHNOLOGY"]) + load_jobs()
+    # documents = load_resumes(categories=["INFORMATION-TECHNOLOGY"]) #+ load_jobs()
     # chunks = chunk_documents(documents)
     # print(f"Loaded {len(chunks)} chunks")
     # store_documents(chunks)
