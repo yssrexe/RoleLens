@@ -21,13 +21,13 @@ splitter = RecursiveCharacterTextSplitter(
 class ResumeMetadata(BaseModel):
     industry: str
     role: str
-    primary_skills: List[str]
+    all_skills: List[str]
     years_experience: int
     education_level: str
 
 _prompt = ChatPromptTemplate.from_template(
     "Extract structured information from this resume.\n"
-    "Return ONLY a JSON object with keys: industry, role, primary_skills (list), "
+    "Return ONLY a JSON object with keys: industry, role, all_skills (list), "
     "years_experience (int), education_level.\n\nResume:\n{resume_text}"
 )
 _llm = ChatOllama(model="llama3.2", format="json", temperature=0)
