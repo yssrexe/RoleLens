@@ -40,9 +40,9 @@ Write the result in exactly this format for one candidate only:
 
 ========================================
 Name   : <{candidate_dict['file_name']}>
-Score  : <one decimal number out of 10>
-Strengths : <short sentence based only on the resume>
-Gaps      : <short sentence about what is missing relative to the role>
+Score  : <one decimal number out of 10, where 10 means the resume fully matches the role requirement, 7-9 means strong match with minor gaps, 4-6 means partial match with clear gaps, and 0-3 means weak match with major missing skills>
+Strengths : <one concise sentence naming the candidate's strongest relevant skills, experience, or domain fit based only on the resume>
+Gaps      : <short sentence about what is missing relative to the role, before deciding check resume skills against the role requirement>
 Questions :
     <skill 1>:
         1. <question>
@@ -60,6 +60,7 @@ Each skill must have exactly 2 distinct interview questions and also under every
 Questions should be specific, practical, and relevant to the role requirement.
 
 Rules:
+- Questions should be directly relevant to how this skill applies to the role requirement, not generic definitions.
 - Use only information supported by the resume and the role requirement.
 - Keep Strengths and Gaps to one concise sentence each.
 - Keep each question short and focused.

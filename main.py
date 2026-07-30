@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # chunks = chunk_documents(documents)
     # print(f"Loaded {len(chunks)} chunks")
     # store_documents(chunks)
-    query = "give me a resume with C / C++ (Low-Level) AI / RAG Integration PostgreSQL / MySQL"
+    query = "give me a resume with knowleage of c and c++ and python and java and javascript and docker and rag and langchain and langgraph"
     results = retrieval_search(query, doc_type="resume")
     outputs = generate_questions_for_resumes(results, query=query)
 
