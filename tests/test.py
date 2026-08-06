@@ -1,12 +1,19 @@
-from sentence_transformers import CrossEncoder
+from langgraph.graph import START, END, StateGraph
+from typing import TypedDict, Dict
 
-model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-scores = model.predict(
-    [
-        ("What is the capital of France?", "Paris is the capital of France."),
-        ("What is the capital of France?", "Berlin is the capital of France."),
-        ("What is the capital of France?", "marseille is the capital of France."),
-    
-    ]
-)
-print(scores)
+class personized(TypedDict):
+    name: str
+
+def personized_test(state: personized):
+    state["name"] = "hello Mr " + state["name"] +  "!"
+    return state
+
+graph = StateGraph(personized)   
+graph.add_node("test", personized_test)
+graph.add_edge(START, "test")
+graph.add_edge("test", END)
+graph = graph.compile()
+print(graph)
+result = graph.invoke({"name": "Yassir"})
+
+print(result)
