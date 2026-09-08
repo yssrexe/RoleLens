@@ -1,4 +1,5 @@
 import re
+import os
 from pathlib import Path
 from pydantic import BaseModel
 from typing import List
@@ -7,8 +8,10 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BASE_DIR / ".env")
 RESUME_DIR = BASE_DIR / "data/resumes"
 JOB_DIR = BASE_DIR / "data/jobs"
 
@@ -30,7 +33,11 @@ _prompt = ChatPromptTemplate.from_template(
     "Return ONLY a JSON object with keys: industry, role, all_skills (list), "
     "years_experience (int), education_level.\n\nResume:\n{resume_text}"
 )
-_llm = ChatOllama(model="llama3.2", format="json", temperature=0)
+_llm = ChatOllama(
+    model=os.getenv("OLLAMA_MODEL", "llama3.2:latest"),
+    base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+    format="json", temperature=0,
+)
 chain = _prompt | _llm.with_structured_output(ResumeMetadata)
 
 def clean_text(text):

@@ -1,10 +1,15 @@
+import os
 
 from langchain_ollama import ChatOllama
 
 from src.config import OLLAMA_MODEL
 
 
-llm = ChatOllama(model=OLLAMA_MODEL, temperature=0)
+llm = ChatOllama(
+    model=os.getenv("OLLAMA_MODEL", OLLAMA_MODEL),
+    base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+    temperature=0,
+)
 
 
 def prepare_dict(result):

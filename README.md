@@ -74,6 +74,43 @@ python web_app.py --port 8080
 
 The server binds to `127.0.0.1`, processes one analysis at a time, and persists uploaded PDFs and job descriptions locally. It is intended for local testing.
 
+## Docker Compose
+
+The Compose setup runs the web app and PostgreSQL 16 with PGVector in two separate containers. It uses Python 3.12 and CPU-only PyTorch. Ollama runs separately on your host or another machine.
+
+When you are ready to run it, install Docker with the Compose plugin, then:
+
+1. Copy `.env.example` to `.env` if you do not already have one, and replace `DB_PASSWORD=change-me` with your own password. Keep any existing settings you need. Quote passwords containing `$` with single quotes in `.env` to prevent Compose interpolation.
+2. Make an Ollama server reachable from the app container, with `llama3.2:latest` already pulled (or set `OLLAMA_MODEL` to an installed model).
+3. Start the containers:
+
+```bash
+docker compose up --build -d
+```
+
+Open **http://127.0.0.1:8000**. Set `APP_PORT` in `.env` to change the host port.
+
+Compose defaults `OLLAMA_BASE_URL` to `http://host.docker.internal:11434` and adds a host-gateway mapping for Linux. A host Ollama server bound only to `127.0.0.1` may not be reachable through that address. Configure the Ollama server to listen on a Docker-reachable interface, for example `OLLAMA_HOST=0.0.0.0:11434 ollama serve` when starting it manually, and restrict access to trusted clients with your firewall. If Ollama runs as a service, configure its service environment and restart it instead. For an Ollama server on another machine, set `OLLAMA_BASE_URL=http://<server-address>:11434` in `.env`. An existing `OLLAMA_BASE_URL=http://localhost:11434` must be removed or changed for Docker because localhost inside the app container refers to the app container itself.
+
+The app receives `DB_HOST=db` and `DB_PORT=5432` automatically and shares the database credentials from `.env`. PostgreSQL is accessible on the Compose network without publishing its port to your host. The app starts after the database health check succeeds, following [Docker's startup-order guidance](https://docs.docker.com/compose/how-tos/startup-order/). The database initialization script enables the [vector extension](https://github.com/pgvector/pgvector) on first initialization.
+
+Storage persists across container recreation:
+
+- `postgres_data` stores the database. Changing the initial database credentials in `.env` does not update an existing database volume.
+- `model_cache` stores downloaded Hugging Face models.
+- `./data` is mounted at `/app/data`, preserving existing resumes and saving new uploads on the host.
+
+The web upload workflow analyzes full resumes directly and does not write vectors to PostgreSQL. The database connection is available to the existing PGVector storage and retrieval modules. Startup does not ingest documents or reset existing vector tables.
+
+Useful commands for later:
+
+```bash
+docker compose logs -f app db
+docker compose down
+```
+
+`docker compose down` preserves named volumes; adding `-v` deletes the database and model cache. The first image build installs the existing full dependency set plus `langchain-ollama`; the first analysis downloads the embedding model if needed. This setup has not been built, run, or tested as part of this change.
+
 ## Command-line usage
 
 Analyze complete resume text files against a job description:
@@ -159,7 +196,7 @@ These defaults are defined in [src/config.py](src/config.py). The cross-encoder 
 
 Retrieval mode evaluates the returned chunks, not reconstructed full resumes. Evidence elsewhere in a resume may be missed. Use complete text files or PDF uploads when testing full-profile extraction.
 
-The existing [loader](src/loaders/ingest.py) reads PDFs under `data/resumes/` and job text files under `data/jobs/`. Its legacy extraction code additionally requires `langchain-ollama`, which is not listed in the original `requirements.txt`. The [storage helper](src/embeddings/embed_store.py) uses the `resume_job_matching` collection. **`store_documents()` drops existing vector tables before recreating them**, so review it before using it with stored data. Neither the web page nor the CLI automatically ingests or rebuilds the database.
+The existing [loader](src/loaders/ingest.py) reads PDFs under `data/resumes/` and job text files under `data/jobs/`. Its legacy extraction code additionally requires `langchain-ollama`, which is included in `requirements-docker.txt` for the container but is not listed in the original `requirements.txt`. The [storage helper](src/embeddings/embed_store.py) uses the `resume_job_matching` collection. **`store_documents()` drops existing vector tables before recreating them**, so review it before using it with stored data. Neither the web page nor the CLI automatically ingests or rebuilds the database.
 
 ## Configuration
 
