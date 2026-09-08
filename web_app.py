@@ -7,6 +7,7 @@ from pathlib import Path
 from threading import BoundedSemaphore
 from pydantic import ValidationError
 from src.graph.workflow import analyze
+from src.loaders.uploads import save_uploads, MAX_REQUEST_BYTES
 
 PAGE = Path(__file__).parent / "web" / "index.html"
 BUSY = BoundedSemaphore(1)
@@ -33,24 +34,43 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path != "/api/analyze":
             return self.reply(404, {"error": "Not found"})
-        if self.headers.get("Content-Type", "").split(";")[0] != "application/json":
-            return self.reply(415, {"error": "Send application/json"})
+        content_type = self.headers.get("Content-Type", "")
+        media_type = content_type.split(";")[0].strip().lower()
+        if media_type not in ("application/json", "multipart/form-data"):
+            return self.reply(415, {"error": "Send PDF uploads with multipart/form-data or resume text as JSON."})
         try:
             size = int(self.headers.get("Content-Length", "0"))
-            if not 0 < size <= 1_000_000:
-                return self.reply(413, {"error": "Request must be between 1 byte and 1 MB"})
-            payload = json.loads(self.rfile.read(size))
-            from src.graph.models import AnalysisRequest
-            AnalysisRequest.model_validate(payload)
-        except (ValueError, ValidationError):
-            return self.reply(400, {"error": "Provide a job description (20–20,000 characters) and 1–10 labeled resumes (20–50,000 characters each)."})
+            limit = MAX_REQUEST_BYTES if media_type == "multipart/form-data" else 1_000_000
+            if not 0 < size <= limit:
+                return self.reply(413, {"error": "Request exceeds the upload size limit."})
+        except ValueError:
+            return self.reply(400, {"error": "Invalid Content-Length."})
         if not BUSY.acquire(blocking=False):
             return self.reply(429, {"error": "An analysis is running. Try again shortly."})
+        saved = None
         try:
-            self.reply(200, analyze(payload))
+            body = self.rfile.read(size)
+            if len(body) != size:
+                raise ValueError("Incomplete upload.")
+            if media_type == "multipart/form-data":
+                payload, saved = save_uploads(content_type, body)
+            else:
+                payload = json.loads(body)
+                from src.graph.models import AnalysisRequest
+                AnalysisRequest.model_validate(payload)
+            try:
+                result = analyze(payload)
+            except Exception:
+                logging.exception("Analysis failed")
+                return self.reply(502, {"error": "Analysis failed. Check Ollama is running and the configured models are available.", "saved_files": saved})
+            if saved:
+                result["saved_files"] = saved
+            self.reply(200, result)
+        except (ValueError, ValidationError) as exc:
+            self.reply(400, {"error": str(exc) if media_type == "multipart/form-data" else "Provide a job description (20–20,000 characters) and 1–10 labeled resumes (20–50,000 characters each)."})
         except Exception:
-            logging.exception("Analysis failed")
-            self.reply(502, {"error": "Analysis failed. Check Ollama is running, the configured model is pulled, and the embedding model is available. See server logs for details."})
+            logging.exception("Upload failed")
+            self.reply(500, {"error": "Could not save uploaded files. Check server logs and available disk space."})
         finally:
             BUSY.release()
 
@@ -59,7 +79,7 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
-    print(f"Resume Lab: http://127.0.0.1:{args.port}", flush=True)
+    print(f"RoleLens: http://127.0.0.1:{args.port}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

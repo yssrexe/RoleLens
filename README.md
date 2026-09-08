@@ -1,8 +1,10 @@
-# Resume RAG — Three-Agent Candidate Matching
+# RoleLens — Three-Agent Candidate Matching
+
+![RoleLens — three-agent resume matching and interview preparation](output/linkedin/rolelens-product-mockup.png)
 
 A Python project that compares resumes with a job description, ranks candidates with an explainable 0–1 fit score, and generates interview questions from candidate gaps. LangGraph coordinates exactly three specialized agents. Ollama handles structured extraction and question generation, while Sentence Transformers provides semantic similarity.
 
-Use the local web page to test pasted resumes, run the CLI with text files, or retrieve resume chunks from the existing PostgreSQL/PGVector store.
+Use the local web page to upload PDF resumes, run the CLI with text files, or retrieve resume chunks from the existing PostgreSQL/PGVector store.
 
 ## Three-step workflow
 
@@ -30,7 +32,7 @@ flowchart LR
 - Ollama installed and running locally.
 - Internet access for dependency installation and initial model downloads.
 
-PostgreSQL is optional and is not needed for pasted resumes or text-file analysis.
+PostgreSQL is optional and is not needed for PDF uploads or text-file analysis.
 
 ### Install and launch
 
@@ -49,11 +51,20 @@ If Ollama is not already running as a service, run `ollama serve` in a separate 
 Open **http://127.0.0.1:8000**:
 
 1. Paste a job description or click **Load example**.
-2. Add one or more labeled resumes.
-3. Click **Run three agents**.
+2. Upload 1–10 PDF resumes (up to 5 MB and 30 pages each).
+3. Click **Analyze candidates**.
 4. Review ranked candidates, extracted profiles, score breakdowns, gaps and interview questions.
 
-The page accepts 1–10 resumes as text. Job descriptions must contain 20–20,000 characters, and each resume must contain 20–50,000 characters. PDF upload is not implemented in the test page. The first analysis downloads `all-MiniLM-L6-v2` if it is not cached and may take longer.
+The page accepts PDF resumes with extractable text. Job descriptions must contain 20–20,000 characters, and each extracted resume must contain 20–50,000 characters. Encrypted PDFs are rejected; scanned PDFs need OCR before upload. The first analysis downloads `all-MiniLM-L6-v2` if it is not cached and may take longer.
+
+Each upload generates a unique batch ID and saves files relative to the project root:
+
+```text
+data/resumes/<batch_id>/<generated_name>.pdf
+data/jobs/<batch_id>.txt
+```
+
+The server reads the saved PDF paths to extract complete resume text, and reads the saved job file for analysis. Original PDF filenames remain candidate labels; disk filenames are generated to avoid collisions. The job file preserves the input exactly. Valid uploads remain saved even if model analysis fails. Invalid batches are removed. The result includes `saved_files` with the saved paths, also available under **Saved files** on the page.
 
 To use another port:
 
@@ -61,7 +72,7 @@ To use another port:
 python web_app.py --port 8080
 ```
 
-The server binds to `127.0.0.1`, processes one analysis at a time, and does not persist submissions. It is intended for local testing.
+The server binds to `127.0.0.1`, processes one analysis at a time, and persists uploaded PDFs and job descriptions locally. It is intended for local testing.
 
 ## Command-line usage
 
@@ -146,7 +157,7 @@ The retriever:
 
 These defaults are defined in [src/config.py](src/config.py). The cross-encoder selects retrieved candidates; Agent 2 independently computes the final fit score using its own semantic and rule-based signals.
 
-Retrieval mode evaluates the returned chunks, not reconstructed full resumes. Evidence elsewhere in a resume may be missed. Use complete text files or pasted resumes when testing full-profile extraction.
+Retrieval mode evaluates the returned chunks, not reconstructed full resumes. Evidence elsewhere in a resume may be missed. Use complete text files or PDF uploads when testing full-profile extraction.
 
 The existing [loader](src/loaders/ingest.py) reads PDFs under `data/resumes/` and job text files under `data/jobs/`. Its legacy extraction code additionally requires `langchain-ollama`, which is not listed in the original `requirements.txt`. The [storage helper](src/embeddings/embed_store.py) uses the `resume_job_matching` collection. **`store_documents()` drops existing vector tables before recreating them**, so review it before using it with stored data. Neither the web page nor the CLI automatically ingests or rebuilds the database.
 
@@ -194,7 +205,7 @@ tests/
 python -m unittest discover -s tests -p 'test_*workflow.py' -v
 ```
 
-The eight focused tests exercise the compiled graph and local HTTP API with deterministic LLM and embedding doubles. They cover agent order, ranking, scoring, missing evidence, gap-linked questions, invalid input and model errors. They do not measure live model quality or verify the PostgreSQL pipeline.
+The focused tests exercise the compiled graph and local HTTP API with deterministic LLM and embedding doubles. They cover agent order, ranking, scoring, missing evidence, gap-linked questions, invalid input and model errors. They do not measure live model quality or verify the PostgreSQL pipeline.
 
 ## Troubleshooting
 

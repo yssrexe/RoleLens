@@ -1,6 +1,6 @@
 # 📄 Data Ingestion Pipeline — `ingest.py`
 
-This module is the **first and most critical step** in the Resume RAG (Retrieval-Augmented Generation) pipeline.  
+This module is the **first and most critical step** in the RoleLens retrieval-augmented generation (RAG) pipeline.
 Its job is to **load**, **clean**, and **split** raw documents (resumes + job descriptions) into structured chunks that are ready to be embedded and stored in a vector database.
 
 ---
@@ -31,7 +31,7 @@ Raw Files (PDF / TXT)
 ## 📁 Data Structure Expected
 
 ```
-resume-rag-project/
+rolelens/
 ├── data/
 │   ├── resumes/
 │   │   ├── INFORMATION-TECHNOLOGY/

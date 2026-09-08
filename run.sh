@@ -6,7 +6,7 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$PROJECT_DIR/.venv"
 
 echo "================================================"
-echo "   Resume RAG Project — Setup & Run"
+echo "   RoleLens — Setup & Run"
 echo "================================================"
 
 # Create venv if it doesn't exist
