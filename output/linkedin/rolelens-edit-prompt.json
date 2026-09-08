@@ -1,4 +1,0 @@
-{
-  "tool": "Built-in image_gen",
-  "prompt": "Edit ONLY the dark navy and teal product mockup image (previously labeled Option 2) among the three reference images. Ignore the white/green infographic and warm 3D illustration. Return ONE image based on the dark Option 2. Replace the huge title 'Resume RAG' with 'RoleLens' and replace the application panel heading 'Resume Lab' with 'RoleLens'. Exact spelling RoleLens. Preserve the original bold white-and-teal title styling, dark navy background, layout, typography, the 0.78 / 1 illustrative score, Parser \u2192 Scorer \u2192 Questions stages, Resume and Job Description papers, Kubernetes gap and question, bottom LangGraph sentence, and Concept preview label. All other visual details and wording must remain unchanged. This is a precise rename edit, not a redesign."
-}
