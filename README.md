@@ -1,173 +1,204 @@
-# Resume RAG Project
+# Resume RAG — Three-Agent Candidate Matching
 
-This project builds a retrieval system for matching resumes with job descriptions using:
+A Python project that compares resumes with a job description, ranks candidates with an explainable 0–1 fit score, and generates interview questions from candidate gaps. LangGraph coordinates exactly three specialized agents. Ollama handles structured extraction and question generation, while Sentence Transformers provides semantic similarity.
 
-- document loading and cleaning
-- chunking
-- PostgreSQL vector search with embeddings
-- cross-encoder reranking for better result quality
+Use the local web page to test pasted resumes, run the CLI with text files, or retrieve resume chunks from the existing PostgreSQL/PGVector store.
 
-The main goal is to take a query like a job requirement and return the most relevant resume chunks, or take a resume query and return the best matching records from the vector store.
+## Three-step workflow
 
-## What I changed recently
-
-I updated the retrieval layer so it no longer relies only on raw vector similarity.
-
-Before the change, `retrieval_search()`:
-
-- queried the vector store for similar chunks
-- deduplicated results by source file
-- returned the first few chunks directly
-
-After the change, `retrieval_search()` now:
-
-- retrieves a larger candidate set from PGVector
-- removes duplicates by source
-- runs a cross encoder over each query/chunk pair
-- sorts results by rerank score
-- returns the highest ranked chunks
-
-I also updated `main.py` so the demo prints both:
-
-- the vector similarity score
-- the rerank score from the cross encoder
-
-## How retrieval search works now
-
-The retrieval flow is in [src/retrievers/retriever.py](src/retrievers/retriever.py).
-
-### 1. Vector retrieval
-
-The system first gets a candidate list from the vector store:
-
-- it uses `vector_store.similarity_search_with_score()`
-- it retrieves `candidate_k` chunks, which defaults to `TOP_K_RETRIEVE`
-- it optionally filters by `doc_type`, such as `resume` or `job_description`
-
-This step is fast and gives broad semantic matches.
-
-### 2. Deduplication
-
-Some documents produce multiple chunks, so the same source file can appear more than once.
-
-To avoid returning repeated chunks from the same file, the code keeps only one candidate per source path.
-
-### 3. Cross encoder reranking
-
-The deduplicated candidates are then reranked with a cross encoder.
-
-The reranker is loaded from the model configured in [src/config.py](src/config.py):
-
-- `RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"`
-
-For every candidate, the code builds an input pair:
-
-- `[query, chunk_text]`
-
-The cross encoder scores the pair directly and produces a relevance score.
-
-### 4. Final ordering
-
-The results are sorted by rerank score in descending order and the top `top_k` items are returned.
-
-Each returned document now includes:
-
-- `vector_score`
-- `rerank_score`
-
-## Why use a cross encoder
-
-Vector search is good at finding candidates quickly, but it is not always the best final ranker.
-
-A cross encoder is useful because it:
-
-- compares the query and document together
-- gives a more precise relevance score
-- usually improves ranking quality over pure similarity search
-
-In this project, the vector store does the broad search and the cross encoder does the final ranking.
-
-## Key files
-
-### [src/retrievers/retriever.py](src/retrievers/retriever.py)
-
-This is the main file for retrieval.
-
-It now contains:
-
-- `get_reranker()` to lazily load the cross encoder
-- `retrieval_search()` to run vector retrieval and reranking
-
-### [src/embeddings/embed_store.py](src/embeddings/embed_store.py)
-
-This file sets up:
-
-- HuggingFace embeddings
-- the `PGVector` vector store
-- document storage into PostgreSQL
-
-### [src/config.py](src/config.py)
-
-This file holds the important model and retrieval settings:
-
-- `EMBEDDING_MODEL`
-- `RERANKER_MODEL`
-- `TOP_K_RETRIEVE`
-- `TOP_K_RERANK`
-
-### [main.py](main.py)
-
-This is the demo entrypoint.
-
-It currently:
-
-- loads resumes and jobs
-- chunks the documents
-- stores them in the vector store
-- runs `retrieval_search()`
-- prints the source and both scores
-
-## Example usage
-
-```python
-from src.retrievers.retriever import retrieval_search
-
-results = retrieval_search(
-	"give me a resume with C / C++ (Low-Level) AI / RAG Integration PostgreSQL / MySQL",
-	doc_type="resume",
-)
-
-for result in results:
-	print(result.metadata["source"])
-	print(result.metadata.get("vector_score"))
-	print(result.metadata.get("rerank_score"))
+```mermaid
+flowchart LR
+    A[Resume text + job description] --> B[Agent 1: Resume Parser]
+    B --> C[Agent 2: Scorer / Ranker]
+    C --> D[Agent 3: Interview Question Generator]
+    D --> E[Ranked profiles, scores, gaps and questions]
 ```
 
-## Current retrieval parameters
+| Step | Agent | Responsibility |
+| --- | --- | --- |
+| 1 | [Resume Parser](src/graph/nodes/resume_parser.py) | Extracts skills, years of experience, seniority and education from each resume, plus explicit mandatory requirements from the job description. |
+| 2 | [Scorer / Ranker](src/graph/nodes/scorer_ranker.py) | Combines semantic similarity with deterministic matching rules, sorts candidates, and identifies gaps in the supplied evidence. |
+| 3 | [Interview Question Generator](src/graph/nodes/interview_q_generator.py) | Generates up to six practical questions per candidate tied to identified gaps, with guidance on what evidence to listen for. |
 
-The defaults currently come from [src/config.py](src/config.py):
+[workflow.py](src/graph/workflow.py) connects the agents in that order using a typed LangGraph `StateGraph`. Candidates with no identified rule-based gaps receive no gap questions.
 
-- `TOP_K_RETRIEVE = 10`
-- `TOP_K_RERANK = 5`
+## Quick start: local web page
 
-That means the system:
+### Prerequisites
 
-- fetches 10 candidates from PGVector
-- reranks them with the cross encoder
-- returns the best 5
+- Python 3.12.
+- Ollama installed and running locally.
+- Internet access for dependency installation and initial model downloads.
 
-## Notes about the current implementation
+PostgreSQL is optional and is not needed for pasted resumes or text-file analysis.
 
-- The cross encoder is loaded lazily and cached so it is not recreated on every search.
-- The demo currently focuses on the `INFORMATION-TECHNOLOGY` resume category.
-- `store_documents()` drops and recreates the table before inserting documents, which is useful for development but not ideal for production.
+### Install and launch
 
-## Next improvements
+Run these commands from the project root:
 
-Possible follow-up work:
+```bash
+python3 -m venv .venv-agents
+source .venv-agents/bin/activate
+pip install -r requirements-agents.txt
+ollama pull llama3.2:latest
+python web_app.py
+```
 
-- expose `candidate_k` and `top_k` through a CLI or API
-- combine vector score and rerank score into one final score
-- add tests for reranking order
-- add a small API or UI on top of `retrieval_search()`
+If Ollama is not already running as a service, run `ollama serve` in a separate terminal before pulling the model.
 
+Open **http://127.0.0.1:8000**:
+
+1. Paste a job description or click **Load example**.
+2. Add one or more labeled resumes.
+3. Click **Run three agents**.
+4. Review ranked candidates, extracted profiles, score breakdowns, gaps and interview questions.
+
+The page accepts 1–10 resumes as text. Job descriptions must contain 20–20,000 characters, and each resume must contain 20–50,000 characters. PDF upload is not implemented in the test page. The first analysis downloads `all-MiniLM-L6-v2` if it is not cached and may take longer.
+
+To use another port:
+
+```bash
+python web_app.py --port 8080
+```
+
+The server binds to `127.0.0.1`, processes one analysis at a time, and does not persist submissions. It is intended for local testing.
+
+## Command-line usage
+
+Analyze complete resume text files against a job description:
+
+```bash
+python main.py --job job.txt --resumes resume1.txt resume2.txt
+```
+
+The CLI prints JSON containing:
+
+- `requirements`: extracted mandatory job requirements.
+- `candidates`: ranked profiles with candidate IDs, labels, fit scores, component scores, effective weights, matched skills, gaps and interview questions.
+- `stages`: the three completed agent names in execution order.
+
+You can also call the workflow from Python:
+
+```python
+from src.graph.workflow import analyze
+
+result = analyze({
+    "job_description": "Backend engineer requiring Python, Docker and 3 years of experience.",
+    "resumes": [{
+        "label": "Candidate 1",
+        "text": "Backend developer with 2 years of professional Python experience.",
+    }],
+})
+
+for candidate in result["candidates"]:
+    print(candidate["rank"], candidate["label"], candidate["fit_score"])
+    print(candidate["gaps"])
+    print(candidate["questions"])
+```
+
+## How scoring works
+
+Agent 2 combines the following signals:
+
+| Signal | Base weight | Calculation |
+| --- | --- | --- |
+| Semantic similarity | 45% | Cosine similarity between job and resume embeddings, clipped to [0, 1]. |
+| Required skills | 35% | Fraction of required skills found in the extracted profile. |
+| Experience | 10% | Candidate years divided by required years, capped at 1. |
+| Seniority | 5% | Candidate level divided by required level, capped at 1; levels run from junior to lead. |
+| Education | 5% | Fraction of required normalized credentials found in the profile. |
+
+```text
+fit_score = sum(component_score × base_weight) / sum(active_base_weights)
+```
+
+A rule component is included only when the job specifies the corresponding requirement; experience requires a positive minimum. The remaining weights are normalized. Unknown candidate evidence contributes zero for the relevant requirement. Results expose both the component scores and effective weights.
+
+Skills use normalized exact matching with a small alias map, such as `JS → JavaScript` and `K8s → Kubernetes`. Education uses normalized exact credential matching; higher degrees or equivalent qualifications do not automatically satisfy another credential. The weights and matching rules are defined in [scorer_ranker.py](src/graph/nodes/scorer_ranker.py).
+
+These scores are heuristic fit measures, not calibrated probabilities. A gap means evidence was not found in the supplied text. Review model extraction and gaps before using results in a hiring decision.
+
+## Optional RAG retrieval
+
+The existing retrieval subsystem can select candidates from an already populated PostgreSQL database with PGVector before running the same three agents:
+
+```bash
+pip install -r requirements.txt
+python main.py --job job.txt --retrieve
+```
+
+Configure the database connection in the project-root `.env`:
+
+```dotenv
+DB_USER=your_user
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=your_database
+```
+
+The retriever:
+
+1. Retrieves up to `TOP_K_RETRIEVE = 4` candidate chunks from the vector store.
+2. Deduplicates them by source.
+3. Reranks them with `cross-encoder/ms-marco-MiniLM-L-6-v2`.
+4. Returns up to `TOP_K_RERANK = 2` chunks for the three-agent workflow.
+
+These defaults are defined in [src/config.py](src/config.py). The cross-encoder selects retrieved candidates; Agent 2 independently computes the final fit score using its own semantic and rule-based signals.
+
+Retrieval mode evaluates the returned chunks, not reconstructed full resumes. Evidence elsewhere in a resume may be missed. Use complete text files or pasted resumes when testing full-profile extraction.
+
+The existing [loader](src/loaders/ingest.py) reads PDFs under `data/resumes/` and job text files under `data/jobs/`. Its legacy extraction code additionally requires `langchain-ollama`, which is not listed in the original `requirements.txt`. The [storage helper](src/embeddings/embed_store.py) uses the `resume_job_matching` collection. **`store_documents()` drops existing vector tables before recreating them**, so review it before using it with stored data. Neither the web page nor the CLI automatically ingests or rebuilds the database.
+
+## Configuration
+
+The agent model client reads these optional `.env` settings:
+
+```dotenv
+OLLAMA_MODEL=llama3.2:latest
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+Keep existing database settings when adding these values. Embedding and retrieval model names are configured in [src/config.py](src/config.py). With the default Ollama URL, inference runs locally.
+
+## Project structure
+
+```text
+main.py                              # CLI: text files or existing retrieval
+web_app.py                           # Local HTTP server and analysis endpoint
+web/index.html                       # Simple test page
+requirements-agents.txt              # Dependencies for the three-agent workflow
+requirements.txt                     # Original retrieval-stack dependencies
+src/
+  config.py                          # Model names and retrieval settings
+  graph/
+    models.py                        # Validated input and LLM output schemas
+    services.py                      # Ollama client and lazy embedding model
+    workflow.py                      # Shared state and three-agent graph
+    nodes/
+      resume_parser.py               # Agent 1
+      scorer_ranker.py               # Agent 2
+      interview_q_generator.py       # Agent 3
+  loaders/ingest.py                   # Existing PDF/text loading and chunking
+  embeddings/embed_store.py          # Existing PGVector storage
+  retrievers/retriever.py             # Vector search and cross-encoder reranking
+  prompt_chain/prompt_chain.py        # Legacy question-generation chain
+tests/
+  test_workflow.py                    # Agent order, scoring and ranking tests
+  test_web_workflow.py                # HTTP validation and analysis tests
+```
+
+## Tests
+
+```bash
+python -m unittest discover -s tests -p 'test_*workflow.py' -v
+```
+
+The eight focused tests exercise the compiled graph and local HTTP API with deterministic LLM and embedding doubles. They cover agent order, ranking, scoring, missing evidence, gap-linked questions, invalid input and model errors. They do not measure live model quality or verify the PostgreSQL pipeline.
+
+## Troubleshooting
+
+- **Analysis fails:** check that Ollama is running, `ollama list` includes the configured model, and the embedding model can download or is cached. See the server terminal for details.
+- **Another analysis is running:** wait for it to finish, then retry.
+- **`ModuleNotFoundError: urllib3.packages`:** the original `.venv` was found to have an inconsistent dependency installation. Use the fresh `.venv-agents` environment from the quick start.
+- **Unexpected extracted fields or gaps:** review the original text and extracted profile. Structured JSON validates the output shape, but does not guarantee factual extraction accuracy.

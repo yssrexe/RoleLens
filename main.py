@@ -1,28 +1,27 @@
+"""Run the three-agent workflow with text files or existing PGVector retrieval."""
+import argparse
+import json
 from pathlib import Path
-import os
-from dotenv import load_dotenv
+from src.graph.workflow import analyze
 
-load_dotenv(Path(__file__).resolve().parent / ".env")
-
-from src.loaders.ingest import load_resumes, load_jobs, chunk_documents
-from src.embeddings.embed_store import store_documents
-from src.retrievers.retriever import retrieval_search
-from src.prompt_chain.prompt_chain import generate_questions_for_resumes
-
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--job", type=Path, required=True, help="Job description text file")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--resumes", nargs="+", type=Path, help="Resume text files")
+    group.add_argument("--retrieve", action="store_true", help="Use the existing PGVector retriever (returns chunks)")
+    args = parser.parse_args()
+    job = args.job.read_text()
+    if args.retrieve:
+        from src.retrievers.retriever import retrieval_search
+        docs = retrieval_search(job, doc_type="resume")
+        resumes = [{"label": d.metadata.get("file_name") or d.metadata.get("source") or f"Candidate {i+1}",
+                    "text": d.page_content} for i, d in enumerate(docs)]
+        if not resumes:
+            parser.error("No resumes found in the vector store")
+    else:
+        resumes = [{"label": p.name, "text": p.read_text()} for p in args.resumes]
+    print(json.dumps(analyze({"job_description": job, "resumes": resumes}), indent=2))
 
 if __name__ == "__main__":
-    # documents = load_resumes(categories=["INFORMATION-TECHNOLOGY"]) #+ load_jobs()
-    # chunks = chunk_documents(documents)
-    # print(f"Loaded {len(chunks)} chunks")
-    # store_documents(chunks)
-    query = "give me a resume with knowleage of c and c++ and python and java and javascript and docker and rag and langchain and langgraph"
-    results = retrieval_search(query, doc_type="resume")
-    outputs = generate_questions_for_resumes(results, query=query)
-
-    for output in outputs:
-        print(output["response"])
-        print("\n" + "=" * 40 + "\n")
-        
-        
-
-
+    main()

@@ -1,0 +1,7 @@
+# Minimal dependencies for the three-agent CLI and local web page.
+# The original requirements.txt remains available for the PGVector pipeline.
+langgraph==1.2.6
+pydantic==2.13.4
+requests==2.34.2
+python-dotenv==1.2.2
+sentence-transformers==5.6.0
