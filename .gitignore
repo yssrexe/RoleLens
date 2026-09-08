@@ -1,5 +1,7 @@
 .venv
 __pycache__/
 *.pyc
-
+.env
+main.py
 .venv-agents/
+output/linkedin/*
