@@ -1,6 +1,6 @@
 # RoleLens — Three-Agent Candidate Matching
 
-![RoleLens — three-agent resume matching and interview preparation](output/linkedin/rolelens-product-mockup.png)
+![RoleLens — three-agent resume matching and interview preparation](assets/sd_rolelens.gif)
 
 A Python project that compares resumes with a job description, ranks candidates with an explainable 0–1 fit score, and generates interview questions from candidate gaps. LangGraph coordinates exactly three specialized agents. Ollama handles structured extraction and question generation, while Sentence Transformers provides semantic similarity.
 
@@ -22,6 +22,8 @@ flowchart LR
 | 2 | [Scorer / Ranker](src/graph/nodes/scorer_ranker.py) | Combines semantic similarity with deterministic matching rules, sorts candidates, and identifies gaps in the supplied evidence. |
 | 3 | [Interview Question Generator](src/graph/nodes/interview_q_generator.py) | Generates up to six practical questions per candidate tied to identified gaps, with guidance on what evidence to listen for. |
 
+![System design](assets/System_design.png)
+
 [workflow.py](src/graph/workflow.py) connects the agents in that order using a typed LangGraph `StateGraph`. Candidates with no identified rule-based gaps receive no gap questions.
 
 ## Quick start: local web page
@@ -41,7 +43,7 @@ Run these commands from the project root:
 ```bash
 python3 -m venv .venv-agents
 source .venv-agents/bin/activate
-pip install -r requirements-agents.txt
+pip install -r assets/requirements-agents.txt
 ollama pull llama3.2:latest
 python web_app.py
 ```
@@ -171,7 +173,7 @@ These scores are heuristic fit measures, not calibrated probabilities. A gap mea
 The existing retrieval subsystem can select candidates from an already populated PostgreSQL database with PGVector before running the same three agents:
 
 ```bash
-pip install -r requirements.txt
+pip install -r assets/requirements.txt
 python main.py --job job.txt --retrieve
 ```
 
@@ -196,7 +198,7 @@ These defaults are defined in [src/config.py](src/config.py). The cross-encoder 
 
 Retrieval mode evaluates the returned chunks, not reconstructed full resumes. Evidence elsewhere in a resume may be missed. Use complete text files or PDF uploads when testing full-profile extraction.
 
-The existing [loader](src/loaders/ingest.py) reads PDFs under `data/resumes/` and job text files under `data/jobs/`. Its legacy extraction code additionally requires `langchain-ollama`, which is included in `requirements-docker.txt` for the container but is not listed in the original `requirements.txt`. The [storage helper](src/embeddings/embed_store.py) uses the `resume_job_matching` collection. **`store_documents()` drops existing vector tables before recreating them**, so review it before using it with stored data. Neither the web page nor the CLI automatically ingests or rebuilds the database.
+The existing [loader](src/loaders/ingest.py) reads PDFs under `data/resumes/` and job text files under `data/jobs/`. Its legacy extraction code additionally requires `langchain-ollama`, which is included in `assets/requirements-docker.txt` for the container but is not listed in the original `assets/requirements.txt`. The [storage helper](src/embeddings/embed_store.py) uses the `resume_job_matching` collection. **`store_documents()` drops existing vector tables before recreating them**, so review it before using it with stored data. Neither the web page nor the CLI automatically ingests or rebuilds the database.
 
 ## Configuration
 
@@ -215,8 +217,10 @@ Keep existing database settings when adding these values. Embedding and retrieva
 main.py                              # CLI: text files or existing retrieval
 web_app.py                           # Local HTTP server and analysis endpoint
 web/index.html                       # Simple test page
-requirements-agents.txt              # Dependencies for the three-agent workflow
-requirements.txt                     # Original retrieval-stack dependencies
+assets/
+  requirements-agents.txt            # Dependencies for the three-agent workflow
+  requirements.txt                   # Original retrieval-stack dependencies
+  requirements-docker.txt            # Docker image dependencies
 src/
   config.py                          # Model names and retrieval settings
   graph/

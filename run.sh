@@ -25,7 +25,7 @@ echo "✓ Virtual environment activated"
 # Install requirements
 echo "► Installing requirements..."
 pip install --upgrade pip -q
-pip install -r "$PROJECT_DIR/requirements.txt" -q
+pip install -r "$PROJECT_DIR/assets/requirements.txt" -q
 echo "✓ Requirements installed"
 
 # Check .env file

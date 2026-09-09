@@ -1,3 +1,3 @@
--r requirements.txt
+-r assets/requirements.txt
 # Required by the legacy ingestion and question-generation modules.
 langchain-ollama>=1.0,<2.0

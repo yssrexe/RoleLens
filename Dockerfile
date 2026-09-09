@@ -5,10 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HF_HOME=/cache/huggingface
 
 WORKDIR /app
-COPY requirements.txt requirements-docker.txt ./
+COPY assets/requirements.txt assets/requirements-docker.txt ./assets/
 # CPU wheels avoid installing CUDA libraries in the app image.
 RUN pip install --no-cache-dir torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r requirements-docker.txt
+    && pip install --no-cache-dir -r assets/requirements-docker.txt
 
 COPY src ./src
 COPY web ./web
