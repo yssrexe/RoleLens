@@ -13,3 +13,6 @@ notebooks
 langchain-test
 output
 save
+
+.git
+.aws

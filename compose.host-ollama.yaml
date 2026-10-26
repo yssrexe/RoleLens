@@ -1,0 +1,16 @@
+# Linux only: connect to Ollama bound to the host's loopback interface.
+# docker compose -f compose.yaml -f compose.host-ollama.yaml up -d
+services:
+  app:
+    network_mode: host
+    ports: !reset []
+    command: ["uvicorn", "web_app:app", "--host", "127.0.0.1", "--port", "${APP_PORT:-8000}", "--workers", "1"]
+    environment:
+      OLLAMA_BASE_URL: http://127.0.0.1:11434
+      DB_HOST: 127.0.0.1
+      DB_PORT: "${HOST_DB_PORT:-5433}"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${APP_PORT:-8000}/api/health', timeout=3)"]
+  db:
+    ports:
+      - "127.0.0.1:${HOST_DB_PORT:-5433}:5432"

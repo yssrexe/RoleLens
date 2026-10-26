@@ -93,3 +93,7 @@ websockets==15.0.1
 xxhash==3.7.1
 yarl==1.24.2
 zstandard==0.25.0
+
+# HTTP API and ASGI server
+fastapi==0.141.1
+uvicorn==0.53.0

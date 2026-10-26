@@ -1,6 +1,6 @@
 # 📄 Data Ingestion Pipeline — `ingest.py`
 
-This module is the **first and most critical step** in the RoleLens retrieval-augmented generation (RAG) pipeline.
+This module supports offline file ingestion for RoleLens. The browser instead uses `uploads.py` to save and extract PDFs, then `src/retrievers/resume_search.py` to index the current submission. Both paths share cleaning and chunking from `chunking.py`. See [the full workflow guide](../../interview_prep.md).
 Its job is to **load**, **clean**, and **split** raw documents (resumes + job descriptions) into structured chunks that are ready to be embedded and stored in a vector database.
 
 ---
@@ -20,7 +20,7 @@ Raw Files (PDF / TXT)
   Embedding Model
         │
         ▼
-  Vector Database (e.g. ChromaDB / FAISS)
+  PostgreSQL with PGVector
         │
         ▼
   RAG Query & Retrieval

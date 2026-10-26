@@ -1,11 +1,10 @@
-import re
 import os
 from pathlib import Path
 from pydantic import BaseModel
 from typing import List
 from langchain_core.documents import Document
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from src.loaders.chunking import clean_text, chunk_documents
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
@@ -14,12 +13,6 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BASE_DIR / ".env")
 RESUME_DIR = BASE_DIR / "data/resumes"
 JOB_DIR = BASE_DIR / "data/jobs"
-
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=800,
-    chunk_overlap=100,
-    separators=["\n\n", "\n", " ", ""]
-)
 
 class ResumeMetadata(BaseModel):
     industry: str
@@ -39,14 +32,6 @@ _llm = ChatOllama(
     format="json", temperature=0,
 )
 chain = _prompt | _llm.with_structured_output(ResumeMetadata)
-
-def clean_text(text):
-    text = text.encode("utf-8", "ignore").decode("utf-8")
-    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
-    text = re.sub(r'\xc2|\xe2\x80\x8b', '', text)
-    text = re.sub(r' {2,}', ' ', text)
-    text = re.sub(r'\n{3,}', '\n\n', text)
-    return text.strip()
 
 def load_resumes(categories=None):
     docs = []
@@ -99,10 +84,3 @@ def load_jobs():
             )
         )
     return docs
-
-def chunk_documents(documents):
-    chunks = splitter.split_documents(documents)
-    for i, chunk in enumerate(chunks):
-        chunk.metadata["chunk_id"] = i
-        chunk.page_content = clean_text(chunk.page_content)
-    return chunks

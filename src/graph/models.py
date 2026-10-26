@@ -1,8 +1,19 @@
 from typing import Literal
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 class StructuredModel(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    @field_validator("skills", "required_skills", "education", mode="before", check_fields=False)
+    @classmethod
+    def remove_missing_list_entries(cls, value):
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return [item for item in value if item is not None and not (
+                isinstance(item, str) and item.strip().lower() in
+                {"", "null", "none", "unknown", "n/a", "not specified"})]
+        return value
 
 class Profile(StructuredModel):
     skills: list[str] = Field(default_factory=list)

@@ -1,4 +1,4 @@
-"""Agent 2: semantic similarity, deterministic fit rules, and ranking."""
+"""Explain candidate fit while preserving cross-encoder shortlist order."""
 import math
 from src.graph.models import Profile, Requirements
 
@@ -41,14 +41,11 @@ def score_profile(profile, requirements, semantic):
             "score_breakdown": components, "effective_weights": {key: weights[key] / total_weight for key in components},
             "matched_skills": matched, "gaps": gaps}
 
-def scorer_ranker(state, similarity):
-    scores = similarity(state["job_description"], [r["text"] for r in state["resumes"]])
-    if len(scores) != len(state["candidates"]):
-        raise ValueError("Expected one semantic score per candidate")
+def scorer_ranker(state):
     requirements = Requirements.model_validate(state["requirements"])
-    candidates = [{**c, **score_profile(Profile.model_validate(c["profile"]), requirements, float(score))}
-                  for c, score in zip(state["candidates"], scores)]
-    candidates.sort(key=lambda c: (-c["fit_score"], c["candidate_id"]))
+    # PGVector returns cosine distance (lower is better), not a probability.
+    # These supporting rule scores must not overwrite the cross-encoder ranking.
+    candidates = [{**c, **score_profile(Profile.model_validate(c["profile"]), requirements,
+                                      1.0 - c["vector_distance"])} for c in state["candidates"]]
     return {"candidates": [{**c, "rank": i + 1} for i, c in enumerate(candidates)],
             "stages": [*state["stages"], "scorer_ranker"]}
-

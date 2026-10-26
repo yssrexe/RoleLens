@@ -1,9 +1,8 @@
 """Lazy local model clients; importing the workflow needs no database or model."""
 import json
 import os
-from functools import lru_cache
 import requests
-from src.config import EMBEDDING_MODEL, OLLAMA_MODEL
+from src.config import OLLAMA_MODEL
 
 class OllamaService:
     def structured(self, schema, instruction, data):
@@ -21,12 +20,3 @@ class OllamaService:
         )
         response.raise_for_status()
         return schema.model_validate_json(response.json()["message"]["content"])
-
-@lru_cache(maxsize=1)
-def embedding_model():
-    from sentence_transformers import SentenceTransformer
-    return SentenceTransformer(EMBEDDING_MODEL)
-
-def semantic_scores(job, resumes):
-    vectors = embedding_model().encode([job, *resumes], normalize_embeddings=True)
-    return [max(0.0, min(1.0, float(vectors[0] @ vector))) for vector in vectors[1:]]

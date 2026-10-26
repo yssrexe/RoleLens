@@ -1,50 +1,56 @@
+"""PGVector retrieval followed by chunk-level cross-encoder reranking."""
+import math
 from functools import lru_cache
-
-from sentence_transformers import CrossEncoder
-
+from langchain_core.documents import Document
 from src.config import RERANKER_MODEL, TOP_K_RERANK, TOP_K_RETRIEVE
-from src.embeddings.embed_store import vector_store
+from src.embeddings.embed_store import get_vector_store
 
 
 @lru_cache(maxsize=1)
-def get_reranker() -> CrossEncoder:
+def get_reranker():
+    from sentence_transformers import CrossEncoder
     return CrossEncoder(RERANKER_MODEL)
 
 
-def retrieval_search(query: str, top_k: int = TOP_K_RERANK, doc_type: str = None, candidate_k: int = TOP_K_RETRIEVE):
-    search_filter = {"doc_type": doc_type} if doc_type else None
-    candidate_pairs = vector_store.similarity_search_with_score(
-        query,
-        k=candidate_k,
-        filter=search_filter,
-    )
-
-    if not candidate_pairs:
+def retrieval_search(query: str, top_k: int = TOP_K_RERANK, doc_type: str = None,
+                     candidate_k: int = TOP_K_RETRIEVE, *, batch_id=None,
+                     store=None, reranker=None):
+    if top_k < 1 or candidate_k < 1:
+        raise ValueError("Retrieval limits must be positive")
+    search_filter = {}
+    if doc_type:
+        search_filter["doc_type"] = doc_type
+    if batch_id is not None:
+        search_filter["batch_id"] = batch_id
+    store = get_vector_store() if store is None else store
+    pairs = store.similarity_search_with_score(query, k=candidate_k,
+                                               filter=search_filter or None)
+    if not pairs:
         return []
-
-    seen_sources = set()
-    candidates = []
-    for doc, vector_score in candidate_pairs:
+    # Rerank all retrieved chunks before deduplication, so a resume's better
+    # supporting passage cannot be discarded before the cross-encoder sees it.
+    reranker = get_reranker() if reranker is None else reranker
+    scores = reranker.predict([[query, doc.page_content] for doc, _ in pairs])
+    if len(scores) != len(pairs):
+        raise ValueError("Expected one cross-encoder score per retrieved chunk")
+    grouped = {}
+    for (doc, distance), score in zip(pairs, scores):
+        score, distance = float(score), float(distance)
+        if not math.isfinite(score) or not math.isfinite(distance):
+            raise ValueError("Retrieval scores must be finite")
         source = doc.metadata.get("source", doc.metadata.get("file_name", "unknown"))
-        if source in seen_sources:
-            continue
-        seen_sources.add(source)
-        doc.metadata["vector_score"] = float(vector_score) if vector_score is not None else None
-        candidates.append(doc)
-
-    reranker = get_reranker()
-    rerank_inputs = [[query, doc.page_content] for doc in candidates]
-    rerank_scores = reranker.predict(rerank_inputs)
-
-    ranked_docs = sorted(
-        zip(candidates, rerank_scores),
-        key=lambda item: item[1],
-        reverse=True,
-    )
-
+        evidence = {"text": doc.page_content, "chunk_id": doc.metadata.get("chunk_id"),
+                    "vector_distance": distance, "rerank_score": score}
+        grouped.setdefault(source, []).append((doc, evidence))
     results = []
-    for doc, rerank_score in ranked_docs[:top_k]:
-        doc.metadata["rerank_score"] = float(rerank_score)
-        results.append(doc)
-
-    return results
+    for entries in grouped.values():
+        entries.sort(key=lambda entry: (-entry[1]["rerank_score"], entry[1]["vector_distance"]))
+        best, evidence = entries[0]
+        results.append(Document(page_content=best.page_content, metadata={
+            **best.metadata, "vector_score": evidence["vector_distance"],
+            "rerank_score": evidence["rerank_score"],
+            "retrieved_evidence": [entry[1] for entry in entries],
+        }))
+    results.sort(key=lambda doc: (-doc.metadata["rerank_score"],
+                                  doc.metadata["vector_score"], str(doc.metadata.get("source", ""))))
+    return results[:top_k]

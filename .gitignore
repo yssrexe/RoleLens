@@ -1,8 +1,32 @@
-.venv
+# Python environments and generated caches
+.venv*/
+venv/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Local credentials and configuration
 .env
-main.py
-.venv-agents/
-output/linkedin/*
+.env.*
+!.env.example
+.aws/
+
+# Uploaded documents, datasets, and generated reports
+/data/
+/output/
+*.log
+
+# Local tools and editor files
 save
+save.git
+.agents/
+.codex/
+.idea/
+.vscode/
+.DS_Store
